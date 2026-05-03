@@ -36,12 +36,26 @@ class AppShell extends StatefulWidget {
 class _AppShellState extends State<AppShell> {
   int _navIndex = 0;
   final List<_Screen> _stack = [_Home()];
-  bool _captureOpen = false;
 
   _Screen get _current => _stack.last;
 
   void _push(_Screen screen) => setState(() => _stack.add(screen));
   void _pop() => setState(() { if (_stack.length > 1) _stack.removeLast(); });
+
+  void _openCapture() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => CaptureScreen(
+        onClose: () => Navigator.pop(context),
+        onSortNow: () {
+          Navigator.pop(context);
+          setState(() => _stack.add(_Inbox()));
+        },
+      ),
+    );
+  }
 
   void _onNavTap(int index) {
     setState(() {
@@ -125,40 +139,10 @@ class _AppShellState extends State<AppShell> {
           ? BottomNav(
               currentIndex: _navIndex,
               onTap: _onNavTap,
-              onCapture: () => setState(() => _captureOpen = true),
+              onCapture: _openCapture,
             )
           : null,
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       extendBody: true,
     );
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (_captureOpen) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!_captureOpen) return;
-        showModalBottomSheet(
-          context: context,
-          isScrollControlled: true,
-          backgroundColor: Colors.transparent,
-          builder: (_) => CaptureScreen(
-            onClose: () {
-              Navigator.pop(context);
-              setState(() => _captureOpen = false);
-            },
-            onSortNow: () {
-              Navigator.pop(context);
-              setState(() {
-                _captureOpen = false;
-                _stack.add(_Inbox());
-              });
-            },
-          ),
-        ).whenComplete(() => setState(() => _captureOpen = false));
-        _captureOpen = false;
-      });
-    }
   }
 }
